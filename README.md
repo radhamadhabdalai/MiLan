@@ -1,4 +1,4 @@
-# On this auspicious day of New Year 2082 hindhu sambat and odia calendar Wishing you all a Happy New Year
+# On this auspicious day of New Year (2080) Hindhu Sambat and Odia calendar Wishing you all a Happy New Year
 
 
 # This repository contains basic implementation of supervised learning approaches 
@@ -12,10 +12,18 @@
 
 # Python already installed (Ubuntu 18.04)
 # conda commands for installing those libraries
-conda install numpy
-conda install pandas
-conda install scikit-learn
+1. conda install numpy
+2. conda install pandas
+3. conda install scikit-learn
+4. conda install matplotlib
+5. conda install python-graphviz
+6. conda install pydotplus
 
+#SULE(Supervised LEarning)
+
+The dataset file and jupyter notebook file
+1. fruit_data.csv
+2. SULE.ipynb  
 
 # Python course for machine learning will be there after sometime
 
