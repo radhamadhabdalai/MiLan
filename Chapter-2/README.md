@@ -2,7 +2,7 @@
 
 
 # This repository contains implementations of preliminary mathematical background for machine learning
-The following implementations are based on simple python. Students, Engineers, Reseraches, Scientists and authors are encouraged
+The following implementations are done using python 3,8. Students, Engineers, Reseraches, Scientists and authors are encouraged
 to write these codes completely on native languages. They should advise and instruct others to write and verify the same with python or C.
 
 Program Lists
@@ -42,11 +42,6 @@ Reference-
 7.conda install sympy
 8.conda install scipy
 
-#SULE(Supervised LEarning)
-
-The dataset file and jupyter notebook file
-1. fruit_data.csv
-2. SULE.ipynb  
 
 # Python course for machine learning will be there after sometime
 

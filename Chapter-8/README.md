@@ -1,15 +1,15 @@
-# Om Sree Sree hanumate Namoh
+# Om Sree Sree Hanumate Namoh
 
-#This folder contains some trending applications in machine learning doamin.
+#This folder contains some trending applications in machine learning domain.
 
-The basic software needed for this
-# The softwares required for this application
+The basic softwares needed for these applications
+
 1. Python 3.x
 2. Numpy Library
 3. Pandas Library
 4. Scikit-Learn
 
-Besides these other software reqiorements are suggeseted as follows
+Besides these other software requirements are suggeseted as follows
 
 1. Stock market prediction
 
@@ -17,8 +17,10 @@ Besides these other software reqiorements are suggeseted as follows
  Here  I am using python 3.6 
 
 #For other packages refer the following conda list seriously
-#
+# command at terminal  $ conda list
+
 # Name                    Version                   Build  Channel
+----------------------------------------------------------------------
 _libgcc_mutex             0.1                        main  
 _openmp_mutex             5.1                       1_gnu  
 absl-py                   2.1.0                    pypi_0    pypi
@@ -291,11 +293,11 @@ For this application
 
 Reference- https://blog.quantinsti.com/neural-network-python/
 
-The challenging part of this sample projectc is compiling tensorflow, keras, numpy and ta-lib
-For financial trading application ta-lib is a package written in c/c++. This is a very good library I have seen so far.  
-Anyhow students and reserachers are advised to learn and reserach more and try to implement from scratch as there may be some compatibility issues while compiling all these libraries together.
+The challenging part of this sample projectc is compiling tensorflow, keras, numpy and ta-lib tpgether.
+For financial trading application ta-lib is a software package written in c/c++. This has been a very good library for building trading application using Machine Learning, I have seen so far.  
+Anyhow students and reserachers are advised to learn and reserach more on this and try to implement them from scratch as there may be some compatibility issues while compiling all these libraries together.
 
-Installing Ta-lib use following build and commands. This has been run for ubunutu-18.04 and python 3.6
+Installing Ta-lib use following build and commands. This has been running successfully on ubunutu-18.04 and python 3.6
 
 wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz   && sudo tar -xzf ta-lib-0.4.0-src.tar.gz   && sudo rm ta-lib-0.4.0-src.tar.gz   && cd ta-lib/   && sudo ./configure --prefix=/usr   && sudo make   && sudo make install   && cd ~   && sudo rm -rf ta-lib/   && pip install ta-lib
   994  wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz   && sudo tar -xzf ta-lib-0.4.0-src.tar.gz   && sudo rm ta-lib-0.4.0-src.tar.gz   && cd ta-lib/   && sudo ./configure --prefix=/usr   && sudo make   && sudo make install   && cd ~   && sudo rm -rf ta-lib/   && pip install ta-lib
@@ -312,14 +314,14 @@ Reference-
 
 1. Fruit Image Classification using CNN on Google Colab _ by Sidharth Pandita _ hackerdawn _ Medium- 
 
-Software required
+#Software required
 
 Keras 2.1X and compatible tensorflow
 
 # important notice- The google collab drive packages are commented as of now.
 
 
-# Chapter-3 has provided two major unsupervised learning approach 1. K-Means and 2. Gaussian Mixture Model(GMM) 
+
 
 Copyright (c) 2023, 2024 Radhamadhab Dalai, ITER , Siksha O Aanusandhan University, 
 Odisha, India
