@@ -11,7 +11,30 @@ Program Lists
 Reference - How to solve a polynomial. Python implementation of Newton’s… _ by #Revathi Suriyadeepan# _ Analytics Vidhya _ Medium_good
 The main idea is to find the root of polynomial using Newton Raphson's method. Then divide the polynimail with (x-root). Then from the quotient polynomial find the root once gain and do it repeatedly.
 
-Other interseting approachces will be added later after implementations.
+
+2. Vandermonde-Matrix appproach- I am following William's work which is best suited for simple polynomial with real roots.(Still working)
+
+The idea behind Vandermonde-Matrix generalized approach is
+
+A x= Y
+Where
+A = Vandermonde matrix, x for given coefficients [c0, c1, c2,c3,......,cn]
+It is assumed there are n such polynomial equations and Y is the output
+
+From these n number of equations you have to calculate the root points using least square estimation and SVD calculation. This was implemented in LAPACK package in FORTRAn by ancient saints.(This had been implemnted and optimized using Delphi processor)
+
+This is somehow very familiar with polynomial interpolation approach.(Need to resarch further).
+
+This matrix approach with super fast SVD part (to find eigen values which are roots of polynomials) is better than number-1 approach and backward substitution part also.
+
+NUMPY library (roots method np.ling,roots) uses this approach.
+
+MATLAB's fsolve function uses different variant but similar approach.
+
+Reference - "Solid" Kiran Achyutuni's deep dive.......
+(You should work more on this)
+
+Other interseting approachces will be added later after further studies and implementations.
 
 
 2. Matrix algebra(Will be included after some time) 
