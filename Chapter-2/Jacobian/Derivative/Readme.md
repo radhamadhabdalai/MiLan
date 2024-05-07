@@ -1,7 +1,7 @@
 
-### ###############################Om Sree Sree Bankeshwaray Namoh##############################################
+###########################Om Sree Sree Bankeshwaray Namoh###########################
 
-######################################################s Alternate Differentiation ############################
+################################sAlternate Differentiation ############################
 
 
 # Looking forward towards pioneers in the computaion world , afew good works have been mentioned here (Before touching LLVM and Intel level infrastructure these works should be given priority and more works should be completed on these areas.)
@@ -137,9 +137,9 @@ S. B. Sahoo, M. Acharya and B. P. Acharya , “Numerical Evaluation of Derivativ
 
 Using Cauchy’s integral and Gauss-Legendre approximation the derivative of standard functions has been evaluated.  
 
-######################################################################################
+#############################################################################
 Copyright (c) 2023, 2024 , Prof. Radhamadhab Dalai, ITER , Siksha O Aanusandhan University, 
 Odisha, India
 Author's email address :  radhamadhabdalai@soa.ac.in
-#####################################################################################
+##############################################################################
 
