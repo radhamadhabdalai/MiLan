@@ -1,8 +1,8 @@
-# On the eve of another pious day (Lord Parashuram Jayanti, Akshay Tritiya, Farmer's earth worshipping day and finally begining of Lord Jagannath's chariot's construction) in Hindhu calendar. This has been a good day to post an setup program for Sanskrit langauge translator.
-# My objective is to translate Sanskrit scripts (Bharathbarsh) to Odia (Bharathbarsh) language. But it can be translated into other native #langauges too.  
-# ######################Om Sree Sree Hanumate Namoh###########################################
+# On the eve of another pious day (Lord Parashuram Jayanti, Akshay Tritiya, Farmer's earth worshipping day and finally begining of Lord Jagannath's chariot's construction) in Hindhu calendar. This has been a good day to post a setup program for Sanskrit langauge translator.
+# My objective is to translate Sanskrit scripts (Bharathbarsh) to Odia (Bharathbarsh) language. But it can be translated into other native langauges too.  
+# ######################Om Sree Sree Hanumate Namoh########
 
-#This folder contains language translator using RNN (Recurrent Neural Network) and LSTM
+#This folder contains language translator using RNN (Recurrent Neural Network) and LSTM(Long Short Term Memory)
 
 All theory part and Vigyaan part will be posted here in future.
 
