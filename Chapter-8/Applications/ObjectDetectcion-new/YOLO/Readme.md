@@ -7,7 +7,7 @@ This folder contains a notebook file and a Datsets folder.
 First keep dataset ready. You have to download MSCOCO dataset 2017 data
 
 
-## Download Dataset (file size is = 11gb , yo cn use mini 2017 data which is 4 gb but annotation and validation file you have to configure)
+## Download Dataset (file size is = 11gb , you can use mini 2017 data which is 4 gb but annotation and validation file you have to configure)
 Create a folder called 'Datasets/yolo' in the root level (where YOLOv3_Fruit_Detection.ipynb file lies ). Inside the dataset folder, follow the 
 #option-1
 instructions on this page: http://cocodataset.org/#download, download images into 
@@ -15,7 +15,7 @@ instructions on this page: http://cocodataset.org/#download, download images int
 `Datasets/yolo/train2017`, 
 `Datasets/yolo/val2017` ,
 `Datasets/yolo/test2017`
-# option-2    use gstool but you have to configure gsutil using google cloud  I have opted option-1 
+# option-2    use gstool but you have to configure gsutil using google cloud , so I have opted option-1 
 use command line 
 ```bash
 mkdir val2017
@@ -32,7 +32,8 @@ unzip annotations_trainval2017.zip
 ```
 
 ## Creating TF Record
-Copy `tfrecords.py` to your newly created `Datasets/yolo/` folder. Run `tfrecords.py` to generate TF Records. Make sure that all dependecies have been installed (eg. ray, PIL)
+Copy `tfrecords.py` to your newly created `Datasets/yolo/` folder. Run `tfrecords.py` to generate TF Records. 
+All dependecies should have been installed (ray, PIL)
 ```bash
 conda activate yolo (your environment name)
 python tfrecords.py
