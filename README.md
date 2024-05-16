@@ -25,6 +25,13 @@ The dataset file and jupyter notebook file
 1. fruit_data.csv
 2. SULE.ipynb  
 
+# Chapter-7
+Generative Networks - Generative Adversial Networks
+
+Dataset - GOogle drive link will be shared
+Reference -Kaggle
+
+
 # Python course for machine learning will be there after sometime
 
 
