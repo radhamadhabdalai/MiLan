@@ -317,7 +317,10 @@ Reference-
 #Software required
 
 Keras 2.1X and compatible tensorflow
+3. Chat-GPT
+Software- torch
 
+Refernces - A. Karpathy Kaggle
 # important notice- The google collab drive packages are commented as of now.
 
 

@@ -25,6 +25,13 @@ The dataset file and jupyter notebook file
 1. fruit_data.csv
 2. SULE.ipynb  
 
+# Regression Analysis
+1.Linear Regression
+2. SVM
+3.Polynomial
+4. Spline
+
+
 # Python course for machine learning will be there after sometime
 
 
