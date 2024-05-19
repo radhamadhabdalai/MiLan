@@ -1,3 +1,11 @@
+
+######################################################################################
+'''Copyright (c) 2023, 2024 , Prof. Radhamadhab Dalai, ITER , Siksha O Aanusandhan University, 
+Odisha, India
+Author's email address :  radhamadhabdalai@soa.ac.in'''
+###################################################################################
+
+
 import math
 def richardson_extrapolation(T, x, h, k):
     n = len(T)  # Number of components in tensor vector
