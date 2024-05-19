@@ -320,7 +320,13 @@ Keras 2.1X and compatible tensorflow
 3. Chat-GPT
 Software- torch
 
-Refernces - A. Karpathy Kaggle
+References - A. Karpathy in Kaggle site
+
+4. Sengtimental Analysis
+
+
+Reference- An easy tutorial about Sentiment Analysis with Deep Learning and Keras _ by Sergio Virahonda _ Towards Data Science
+
 # important notice- The google collab drive packages are commented as of now.
 
 
