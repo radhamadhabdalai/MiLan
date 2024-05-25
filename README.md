@@ -25,6 +25,9 @@ The dataset file and jupyter notebook file
 1. fruit_data.csv
 2. SULE.ipynb  
 
+# Chapter-6 
+Reinforcement Learning
+1. NEAT simulation 
 # Chapter-7
 Generative Networks - Generative Adversial Networks
 

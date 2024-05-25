@@ -1,0 +1,11 @@
+*.csv
+*.svg
+*.swp
+build/
+dist/
+*.egg-info
+__pycache__/
+runs/
+models/
+visuals/
+movie/
