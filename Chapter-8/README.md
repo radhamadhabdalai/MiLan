@@ -327,7 +327,10 @@ References - A. Karpathy in Kaggle site
 
 Reference- An easy tutorial about Sentiment Analysis with Deep Learning and Keras _ by Sergio Virahonda _ Towards Data Science
 
-# important notice- The google collab drive packages are commented as of now.
+
+5. Om sree Bagalaamukhaiy Banka Vvaasulebhya Namoh 
+Flood prediction - for Mahaanadi river
+1. create data for Mahanadi region 
 
 
 
