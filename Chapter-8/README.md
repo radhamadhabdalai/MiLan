@@ -328,7 +328,7 @@ References - A. Karpathy in Kaggle site
 Reference- An easy tutorial about Sentiment Analysis with Deep Learning and Keras _ by Sergio Virahonda _ Towards Data Science
 
 
-5. Om sree Bagalaamukhaiy Banka Vvaasulebhya Namoh 
+5. Om Sree Sree Hanumate Namoh 
 Flood prediction - for Mahaanadi river
 1. create data for Mahanadi region 
 
