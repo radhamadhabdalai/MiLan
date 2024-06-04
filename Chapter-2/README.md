@@ -37,7 +37,14 @@ Reference - "Solid" Kiran Achyutuni's deep dive.......
 Other interseting approachces will be added later after further studies and implementations.
 
 
-2. Matrix algebra(Will be included after some time) 
+2. Matrix algebra(This has been started) 
+
+# Om Sree Sree Ganshay Namoh
+# Om Sree Sree Bankeswaray Namoh 
+Solving a system of linear equations using SVD decmosition, Eigen decompositions, Pseudo-Inverse has been added in the code.
+This will run on Aryabhatt coprocessor :)
+
+
 3. Eigen values (QR method) and Vectors
 #Without using numpy library (Actually they use the QR implementation, that you can write as given small code snippets)
 Reference- 
