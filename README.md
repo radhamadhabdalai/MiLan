@@ -19,6 +19,10 @@
 5. conda install python-graphviz
 6. conda install pydotplus
 
+# Chapter-1
+in Intro-5.2-1 note - [ a1 0 0 , 0 a2 0, 0 0 a3 ] -----> corrected matrix 3x3 
+You are not studying properly ! !!!!!!!!
+
 #SULE(Supervised LEarning)
 
 The dataset file and jupyter notebook file
