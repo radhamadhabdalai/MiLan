@@ -1,0 +1,209 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMAP Dimensionality Reduction: Small Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .equation {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .diagram {
+            text-align: center;
+            margin: 20px 0;
+            background: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ddd;
+            font-family: monospace;
+        }
+        .note {
+            background: #e7f3fe;
+            border-left: 4px solid #2196F3;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .output {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>UMAP Dimensionality Reduction: Small Example</h1>
+    <p>This example demonstrates UMAP on a small dataset of 5 points in 3D space, reduced to 2D. It illustrates the key steps: constructing a high-dimensional graph, initializing a low-dimensional embedding, and optimizing it.</p>
+
+    <h2>1. Dataset</h2>
+    <p>We create a synthetic dataset with 5 points in 3D space:</p>
+    <pre>
+[[1.0, 1.0, 1.0],  # Point x1
+ [1.1, 1.1, 1.1],  # Point x2 (close to x1)
+ [2.0, 2.0, 2.0],  # Point x3
+ [3.0, 3.0, 3.0],  # Point x4
+ [3.1, 3.1, 3.1]]  # Point x5 (close to x4)
+    </pre>
+    <p>Points \( x_1 \) and \( x_2 \) are close, as are \( x_4 \) and \( x_5 \), while \( x_3 \) is between them.</p>
+
+    <h2>2. Applying UMAP</h2>
+    <h3>Step 1: Construct High-Dimensional Graph</h3>
+    <p><strong>Compute k-Nearest Neighbors (k-NN):</strong></p>
+    <p>Using Euclidean distance, compute distances between all pairs of points. For \( k=2 \) (n_neighbors=2), find the 2 nearest neighbors for each point. Example distances (approximate):</p>
+    <ul>
+        <li>\( d(x_1, x_2) = \sqrt{(1.1-1.0)^2 + (1.1-1.0)^2 + (1.1-1.0)^2} \approx 0.173 \)</li>
+        <li>\( d(x_1, x_3) = \sqrt{(2.0-1.0)^2 + (2.0-1.0)^2 + (2.0-1.0)^2} \approx 1.732 \)</li>
+    </ul>
+    <p>For \( x_1 \), nearest neighbors are \( x_2 \) (0.173) and \( x_3 \) (1.732).</p>
+
+    <p><strong>Assign Edge Weights:</strong></p>
+    <p>Assign weights using the similarity function:</p>
+    <div class="equation">
+        \[ w_{ij} = \exp\left(-\frac{d(x_i, x_j) - \rho_i}{\sigma_i}\right) \]
+    </div>
+    <p>Where \( \rho_i \) is the distance to the nearest neighbor (e.g., for \( x_1 \), \( \rho_1 = 0.173 \)), and \( \sigma_i \) is chosen to satisfy:</p>
+    <div class="equation">
+        \[ \sum_{j \in \text{neighbors of } i} \exp\left(-\frac{d(x_i, x_j) - \rho_i}{\sigma_i}\right) = \log_2(2) = 1 \]
+    </div>
+    <p>For \( x_1 \), the weight to \( x_2 \) is \( w_{12} \approx 1 \), and to \( x_3 \), it’s lower (e.g., \( w_{13} \approx 0.5 \), depending on \( \sigma_1 \)).</p>
+
+    <p><strong>Symmetrize Graph:</strong></p>
+    <p>Combine weights: \( w_{ij} = w_{ij} + w_{ji} - w_{ij}w_{ji} \). This creates an undirected graph.</p>
+
+    <div class="diagram">
+        <pre>
+High-D Graph (3D):
+x1 --- w12 --- x2
+ |             |
+w13          w23
+ |             |
+x3 --- w34 --- x4 --- w45 --- x5
+        </pre>
+        <p><strong>Figure 1:</strong> High-dimensional k-NN graph for 5 points with weighted edges.</p>
+    </div>
+
+    <h3>Step 2: Initialize Low-Dimensional Embedding</h3>
+    <p>Initialize 2D coordinates \( y_i \) using spectral embedding or random initialization. Compute similarities in 2D:</p>
+    <div class="equation">
+        \[ v_{ij} = \frac{1}{1 + a \cdot d(y_i, y_j)^{2b}} \]
+    </div>
+    <p>Where \( a \) and \( b \) are fitted parameters, and \( d(y_i, y_j) \) is the Euclidean distance in 2D.</p>
+
+    <h3>Step 3: Optimize Embedding</h3>
+    <p>Minimize the cross-entropy loss:</p>
+    <div class="equation">
+        \[ \text{Loss} = \sum_{i \neq j} \left[ w_{ij} \log\left(\frac{w_{ij}}{v_{ij}}\right) + (1 - w_{ij}) \log\left(\frac{1 - w_{ij}}{1 - v_{ij}}\right) \right] \]
+    </div>
+    <p>Use stochastic gradient descent to adjust \( y_i \), ensuring \( x_1 \) and \( x_2 \) (and \( x_4 \) and \( x_5 \)) remain close in 2D.</p>
+
+    <h2>3. Python Code</h2>
+    <pre>
+import umap
+import numpy as np
+
+# Define 5 points in 3D
+X = np.array([
+    [1.0, 1.0, 1.0],  # x1
+    [1.1, 1.1, 1.1],  # x2
+    [2.0, 2.0, 2.0],  # x3
+    [3.0, 3.0, 3.0],  # x4
+    [3.1, 3.1, 3.1]   # x5
+])
+
+# Apply UMAP
+reducer = umap.UMAP(n_neighbors=2, min_dist=0.1, n_components=2, random_state=42)
+embedding = reducer.fit_transform(X)
+
+print("2D Embedding:")
+print(embedding)
+    </pre>
+
+    <h2>4. Example Output</h2>
+    <div class="output">
+        <p><strong>2D Embedding (approximate):</strong></p>
+        <pre>
+[[ 0.123,  0.456]  # y1
+ [ 0.125,  0.458]  # y2 (close to y1)
+ [ 1.234,  1.567]  # y3
+ [ 2.345,  2.678]  # y4
+ [ 2.347,  2.680]] # y5 (close to y4)
+        </pre>
+        <p><strong>Note:</strong> Actual values depend on initialization and optimization, but \( y_1, y_2 \) and \( y_4, y_5 \) are close, reflecting high-dimensional similarities.</p>
+    </div>
+
+    <h2>5. Diagram: Low-Dimensional Embedding</h2>
+    <div class="diagram">
+        <pre>
+Low-D Embedding (2D):
+y1 --- y2
+       |
+      y3
+       |
+      y4 --- y5
+        </pre>
+        <p><strong>Figure 2:</strong> 2D embedding preserving proximity of \( x_1, x_2 \) and \( x_4, x_5 \).</p>
+    </div>
+
+    <h2>6. Key Points</h2>
+    <div class="note">
+        <p><strong>Note:</strong> This example shows UMAP preserving local structure (e.g., \( x_1 \) and \( x_2 \) stay close). For small \( k \) (n_neighbors=2), the focus is on local relationships.</p>
+    </div>
+</body>
+</html>

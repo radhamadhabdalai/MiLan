@@ -1,0 +1,260 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>t-SNE Dimensionality Reduction Notes</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        h1, h2, h3, h4 {
+            color: #2c3e50;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .equation {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .diagram {
+            text-align: center;
+            margin: 20px 0;
+            background: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            font-family: monospace;
+        }
+        .note {
+            background: #e7f3fe;
+            border-left: 4px solid #2196F3;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .output {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .substep {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>t-SNE Dimensionality Reduction Mechanism</h1>
+    <p>t-Distributed Stochastic Neighbor Embedding (t-SNE) is a non-linear dimensionality reduction technique primarily used for visualizing high-dimensional data in 2D or 3D. It focuses on preserving local structures by modeling similarities between points as probabilities.</p>
+
+    <h2>1. Overview of t-SNE</h2>
+    <p>t-SNE converts high-dimensional distances into conditional probabilities representing similarities, then optimizes a low-dimensional embedding to match these probabilities. It uses a Gaussian distribution in the high-dimensional space and a Student’s t-distribution in the low-dimensional space to handle the "crowding problem."</p>
+
+    <h2>2. Detailed Steps in t-SNE</h2>
+    <h3>2.1. Compute Pairwise Similarities in High-Dimensional Space</h3>
+    <p>t-SNE models similarities between points as conditional probabilities based on distances.</p>
+    <div class="substep">
+        <h4>Step 1: Calculate Pairwise Distances</h4>
+        <p>For each pair of points \( x_i, x_j \) in the high-dimensional space (e.g., \( \mathbb{R}^D \)), compute the Euclidean distance (or another metric):</p>
+        <div class="equation">
+            \[ d(x_i, x_j) = \sqrt{\sum_{k=1}^D (x_{i,k} - x_{j,k})^2} \]
+        </div>
+
+        <h4>Step 2: Compute Conditional Probabilities</h4>
+        <p>Convert distances into conditional probabilities \( p_{j|i} \), representing the similarity of \( x_j \) to \( x_i \), using a Gaussian kernel:</p>
+        <div class="equation">
+            \[ p_{j|i} = \frac{\exp\left(-\frac{d(x_i, x_j)^2}{2\sigma_i^2}\right)}{\sum_{k \neq i} \exp\left(-\frac{d(x_i, x_k)^2}{2\sigma_k^2}\right)} \]
+        </div>
+        <p>Where:</p>
+        <ul>
+            <li>\( \sigma_i \): Bandwidth of the Gaussian kernel for point \( x_i \), set to achieve a user-defined perplexity.</li>
+            <li>Perplexity: A hyperparameter (typically 5–50) controlling the number of effective neighbors, defined as \( \text{Perplexity} = 2^{H(P_i)} \), where \( H(P_i) \) is the Shannon entropy of \( p_{j|i} \).</li>
+        </ul>
+        <p><strong>How it works:</strong></p>
+        <ul>
+            <li>Perplexity balances local and global structure: lower values focus on local neighborhoods, higher values consider more neighbors.</li>
+            <li>\( \sigma_i \) is determined via binary search to match the specified perplexity for each point.</li>
+        </ul>
+
+        <h4>Step 3: Symmetrize Probabilities</h4>
+        <p>Combine conditional probabilities to create joint probabilities \( p_{ij} \):</p>
+        <div class="equation">
+            \[ p_{ij} = \frac{p_{j|i} + p_{i|j}}{2N} \]
+        </div>
+        <p>Where \( N \) is the number of points, ensuring \( p_{ij} = p_{ji} \) and the probabilities sum to 1.</p>
+    </div>
+
+    <h3>2.2. Compute Similarities in Low-Dimensional Space</h3>
+    <p>Initialize a low-dimensional embedding (e.g., \( y_i \in \mathbb{R}^2 \)) randomly or via PCA. Compute similarities using a Student’s t-distribution with one degree of freedom (Cauchy distribution):</p>
+    <div class="equation">
+        \[ q_{ij} = \frac{\left(1 + d(y_i, y_j)^2\right)^{-1}}{\sum_{k \neq l} \left(1 + d(y_k, y_l)^2\right)^{-1}} \]
+    </div>
+    <p>Where \( d(y_i, y_j) \) is the Euclidean distance in the low-dimensional space. The t-distribution has heavier tails than a Gaussian, allowing dissimilar points to be placed farther apart, mitigating the crowding problem.</p>
+
+    <h3>2.3. Optimize Low-Dimensional Embedding</h3>
+    <p>Minimize the Kullback-Leibler (KL) divergence between the high-dimensional probabilities \( p_{ij} \) and low-dimensional probabilities \( q_{ij} \):</p>
+    <div class="equation">
+        \[ \text{KL}(P||Q) = \sum_{i \neq j} p_{ij} \log\left(\frac{p_{ij}}{q_{ij}}\right) \]
+    </div>
+    <p><strong>How it works:</strong></p>
+    <ul>
+        <li>Gradient descent (often with momentum or adaptive methods like Adam) updates \( y_i \) to minimize the KL divergence.</li>
+        <li>Early exaggeration (multiplying \( p_{ij} \) by a factor, e.g., 4, early in optimization) helps form clusters.</li>
+        <li>The t-distribution ensures local structure preservation by allowing moderate distances in the low-dimensional space for dissimilar points.</li>
+    </ul>
+
+    <h2>3. Diagram: t-SNE Workflow</h2>
+    <div class="diagram">
+        <pre>
+High-D Data → Pairwise Probabilities → Low-D Init → Optimize KL Divergence → Low-D Embedding
+[Points in R^D] → [P_ij Gaussian] → [Random/PCA in R^2] → [Gradient Descent] → [2D Plot]
+        </pre>
+        <p><strong>Figure 1:</strong> t-SNE pipeline from high-dimensional data to optimized low-dimensional embedding.</p>
+    </div>
+
+    <h2>4. Key Hyperparameters</h2>
+    <ul>
+        <li><strong>Perplexity:</strong> Controls the number of effective neighbors (default: 30). Similar to UMAP’s <code>n_neighbors</code>.</li>
+        <li><strong>Learning Rate:</strong> Step size for gradient descent (default: 200). Too high or low values can distort results.</li>
+        <li><strong>n_components:</strong> Output dimensions (typically 2 or 3).</li>
+        <li><strong>Metric:</strong> Distance metric for high-dimensional space (e.g., Euclidean).</li>
+    </ul>
+
+    <h2>5. Small Example: t-SNE on 5 Points</h2>
+    <h3>Dataset</h3>
+    <p>Use the same 5-point 3D dataset as in the UMAP example:</p>
+    <pre>
+[[1.0, 1.0, 1.0],  # x1
+ [1.1, 1.1, 1.1],  # x2 (close to x1)
+ [2.0, 2.0, 2.0],  # x3
+ [3.0, 3.0, 3.0],  # x4
+ [3.1, 3.1, 3.1]]  # x5 (close to x4)
+    </pre>
+
+    <h3>Python Code</h3>
+    <pre>
+import numpy as np
+from sklearn.manifold import TSNE
+
+# Define 5 points in 3D
+X = np.array([
+    [1.0, 1.0, 1.0],
+    [1.1, 1.1, 1.1],
+    [2.0, 2.0, 2.0],
+    [3.0, 3.0, 3.0],
+    [3.1, 3.1, 3.1]
+])
+
+# Apply t-SNE
+tsne = TSNE(n_components=2, perplexity=2, random_state=42)
+embedding = tsne.fit_transform(X)
+
+print("2D Embedding:")
+print(embedding)
+    </pre>
+
+    <h3>Example Output</h3>
+    <div class="output">
+        <p><strong>2D Embedding (approximate):</strong></p>
+        <pre>
+[[  5.12,   3.45]  # y1
+ [  5.15,   3.47]  # y2 (close to y1)
+ [  0.00,   0.00]  # y3
+ [ -5.23,  -3.56]  # y4
+ [ -5.25,  -3.58]] # y5 (close to y4)
+        </pre>
+        <p><strong>Note:</strong> Values are illustrative; actual output varies due to random initialization. \( y_1, y_2 \) and \( y_4, y_5 \) remain close, preserving local structure.</p>
+    </div>
+
+    <h3>Steps in Example</h3>
+    <ol>
+        <li><strong>Compute Distances:</strong> Calculate Euclidean distances (e.g., \( d(x_1, x_2) \approx 0.173 \), \( d(x_1, x_3) \approx 1.732 \)).</li>
+        <li><strong>Conditional Probabilities:</strong> For perplexity=2, compute \( p_{j|i} \) with appropriate \( \sigma_i \). Close points like \( x_1, x_2 \) have high \( p_{12} \).</li>
+        <li><strong>Symmetrize:</strong> Compute \( p_{ij} \) as the average of \( p_{j|i} \) and \( p_{i|j} \).</li>
+        <li><strong>Low-Dimensional Similarities:</strong> Initialize \( y_i \) in 2D, compute \( q_{ij} \) using the t-distribution.</li>
+        <li><strong>Optimize:</strong> Minimize KL divergence to align \( q_{ij} \) with \( p_{ij} \), keeping \( y_1, y_2 \) and \( y_4, y_5 \) close.</li>
+    </ol>
+
+    <h2>6. Diagram: High vs Low-Dimensional Space</h2>
+    <div class="diagram">
+        <pre>
+High-D Space (3D)         →         Low-D Space (2D)
+x1 --- x2                 →         y1 --- y2
+ |     |                  →          |     |
+x3 --- x4 --- x5          →         y3 --- y4 --- y5
+        </pre>
+        <p><strong>Figure 2:</strong> t-SNE maps high-dimensional points to 2D, preserving local proximity (e.g., \( x_1, x_2 \)).</p>
+    </div>
+
+    <h2>7. Advantages and Limitations</h2>
+    <div class="note">
+        <p><strong>Advantages:</strong> Excellent for visualizing local structures and clusters in high-dimensional data.</p>
+        <p><strong>Limitations:</strong> Computationally expensive (O(N²) complexity), sensitive to perplexity, and less effective at preserving global structure compared to UMAP.</p>
+    </div>
+
+    <h2>8. Comparison with UMAP</h2>
+    <ul>
+        <li><strong>Speed:</strong> t-SNE is slower than UMAP due to its quadratic complexity.</li>
+        <li><strong>Structure Preservation:</strong> t-SNE focuses on local structure, while UMAP balances local and global structure.</li>
+        <li><strong>Flexibility:</strong> UMAP supports various distance metrics and is more versatile for non-visualization tasks.</li>
+    </ul>
+
+    <h2>9. Steps to Apply t-SNE</h2>
+    <ol>
+        <li><strong>Preprocess Data:</strong> Normalize or scale features.</li>
+        <li><strong>Set Hyperparameters:</strong> Choose perplexity, learning rate, and <code>n_components</code>.</li>
+        <li><strong>Compute High-Dimensional Probabilities:</strong> Calculate \( p_{j|i} \) and symmetrize to \( p_{ij} \).</li>
+        <li><strong>Initialize Low-Dimensional Embedding:</strong> Use random or PCA initialization.</li>
+        <li><strong>Optimize:</strong> Minimize KL divergence using gradient descent.</li>
+        <li><strong>Output:</strong> Use the embedding for visualization.</li>
+    </ol>
+</body>
+</html>

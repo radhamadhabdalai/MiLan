@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DBSCAN Algorithm - Comprehensive Notes</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #7c3aed;
+            --accent-color: #06b6d4;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --bg-quaternary: #475569;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --border-color: #475569;
+            --code-bg: #1a1a1a;
+            --math-bg: #1e1b4b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.7;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, var(--bg-primary) 0%, #1a202c 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 3rem 0;
+            border-bottom: 2px solid var(--border-color);
+            position: relative;
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(124, 58, 237, 0.05));
+            border-radius: 16px;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 2px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-top: 1rem;
+            font-weight: 300;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: var(--accent-color);
+            margin: 2.5rem 0 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent-color);
+            position: relative;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin: 2rem 0 1rem;
+            font-weight: 700;
+        }
+
+        h4 {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            margin: 1.5rem 0 0.8rem;
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            padding: 2.5rem;
+            margin: 2rem 0;
+            border-radius: 16px;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 4px 25px rgba(0,0,0,0.4);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .section:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 35px rgba(0,0,0,0.5);
+        }
+
+        .algorithm-section {
+            border-left-color: var(--success-color);
+        }
+
+        .complexity-section {
+            border-left-color: var(--warning-color);
+        }
+
+        .comparison-section {
+            border-left-color: var(--danger-color);
+        }
+
+        .toc {
+            background: var(--bg-secondary);
+            padding: 2.5rem;
+            border-radius: 12px;
+            margin-bottom: 3rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .toc h3 {
+            color: var(--accent-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc li {
+            margin: 0.8rem 0;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+        }
+
+        .toc li:last-child {
+            border-bottom: none;
+        }
+
+        .toc a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .toc a:hover {
+            color: var(--accent-color);
+            padding-left: 0.5rem;
+        }
+
+        .math-formula {
+            background: var(--math-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            font-family: 'Times New Roman', serif;
+            font-size: 1.3rem;
+            margin: 2rem 0;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+            position: relative;
+        }
+
+        .math-formula::before {
+            content: '📐';
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: var(--math-bg);
+            padding: 0 10px;
+            font-size: 1rem;
+        }
+
+        .algorithm-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.1));
+            border: 2px solid var(--success-color);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .algorithm-box::before {
+            content: '🔧 Algorithm';
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: var(--bg-secondary);
+            padding: 0 15px;
+            color: var(--success-color);
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .code-block {
+            background: var(--code-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 2rem 0;
+            border: 1px solid var(--border-color);
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .code-block::before {
+            content: attr(data-lang);
+            position: absolute;
+            top: 0.8rem;
+            right: 1.5rem;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: bold;
+        }
+
+        .code-block code {
+            color: #e2e8f0;
+            font-family: 'Monaco', 'Menlo', 'Cascadia Code', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .diagram {
+            background: var(--bg-tertiary);
+            padding: 2.5rem;
+            border-radius: 12px;
+            text-align: center;
+            font-family: 'Monaco', monospace;
+            font-size: 0.9rem;
+            margin: 2rem 0;
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .diagram::before {
+            content: '📊 Diagram';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--bg-tertiary);
+            padding: 0 10px;
+            color: var(--accent-color);
+            font-weight: bold;
+            font-size: 0.8rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .inline-code {
+            background: var(--bg-tertiary);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            font-family: 'Monaco', monospace;
+            font-size: 0.9em;
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(124, 58, 237, 0.1));
+            border: 1px solid var(--primary-color);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .highlight-box::before {
+            content: '💡';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--bg-secondary);
+            padding: 0 10px;
+            font-size: 1.2rem;
+        }
+
+        .warning-box {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.1));
+            border: 1px solid var(--warning-color);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .warning-box::before {
+            content: '⚠️';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--bg-secondary);
+            padding: 0 10px;
+            font-size: 1.2rem;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(16, 185, 129, 0.1));
+            border: 1px solid var(--accent-color);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .info-box::before {
+            content: 'ℹ️';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--bg-secondary);
+            padding: 0 10px;
+            font-size: 1.2rem;
+        }
+
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .parameter-card {
+            background: var(--bg-tertiary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-top: 4px solid var(--accent-color);
+            transition: transform 0.3s ease;
+        }
+
+        .parameter-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .parameter-name {
+            color: var(--accent-color);
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        ul, ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+
+        li {
+            margin: 0.5rem 0;
+            color: var(--text-secondary);
+        }
+
+        .comparison-table {
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 2rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th {
+            background: var(--bg-quaternary);
+            color: var(--accent-color);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .complexity-badge {
+            background: var(--warning-color);
+            color: var(--bg-primary);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-block;
+            margin: 0.2rem;
+        }
+
+        .advantages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .advantage-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.05));
+            border: 1px solid var(--success-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .advantage-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .disadvantages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .disadvantage-card {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(245, 158, 11, 0.05));
+            border: 1px solid var(--danger-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .disadvantage-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .section {
+                padding: 1.5rem;
+            }
+            
+            .parameter-grid, .advantages-grid, .disadvantages-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .syntax-highlight .keyword { color: #ff79c6; font-weight: bold; }
+        .syntax-highlight .string { color: #f1fa8c; }
+        .syntax-highlight .comment { color: #6272a4; font-style: italic; }
+        .syntax-highlight .function { color: #50fa7b; font-weight: bold; }
+        .syntax-highlight .number { color: #bd93f9; }
+        .syntax-highlight .operator { color: #ff79c6; }
+        .syntax-highlight .variable { color: #8be9fd; }
+
+        .step-flow {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .step-item {
+            background: var(--bg-tertiary);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--success-color);
+            position: relative;
+        }
+
+        .step-number {
+            background: var(--success-color);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: absolute;
+            left: -15px;
+            top: 1.5rem;
+        }
+
+        .visual-example {
+            background: var(--bg-tertiary);
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 2rem 0;
+            text-align: center;
+            border: 2px dashed var(--accent-color);
+        }
+
+        .point-types {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .point-type {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+            min-width: 150px;
+        }
+
+        .core-point { background: rgba(16, 185, 129, 0.2); border: 2px solid var(--success-color); }
+        .border-point { background: rgba(245, 158, 11, 0.2); border: 2px solid var(--warning-color); }
+        .noise-point { background: rgba(239, 68, 68, 0.2); border: 2px solid var(--danger-color); }
+
+        .scroll-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .scroll-top.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>DBSCAN Algorithm</h1>
+            <p class="subtitle">Density-Based Spatial Clustering of Applications with Noise</p>
+            <p class="subtitle">Comprehensive Notes with Equations, Diagrams, and Implementation</p>
+        </div>
+
+        <div class="toc">
+            <h3>📑 Table of Contents</h3>
+            <ul>
+                <li><a href="#introduction">Introduction to DBSCAN</a></li>
+                <li><a href="#core-concepts">Core Concepts and Definitions</a></li>
+                <li><a href="#algorithm">The DBSCAN Algorithm</a></li>
+                <li><a href="#mathematical">Mathematical Formulation</a></li>
+                <li><a href="#parameters">Parameters and Their Effects</a></li>
+                <li><a href="#implementation">Implementation and Code Examples</a></li>
+                <li><a href="#complexity">Time and Space Complexity</a></li>
+                <li><a href="#advantages">Advantages and Disadvantages</a></li>
+                <li><a href="#comparison">Comparison with Other Algorithms</a></li>
+                <li><a href="#applications">Real-world Applications</a></li>
+                <li><a href="#variants">Variants and Extensions</a></li>
+            </ul>
+        </div>
+
+        <section id="introduction" class="section">
+            <h2>🎯 Introduction to DBSCAN</h2>
+            
+            <p>DBSCAN (Density-Based Spatial Clustering of Applications with Noise) is a powerful density-based clustering algorithm introduced by Martin Ester, Hans-Peter Kriegel, Jörg Sander, and Xiaowei Xu in 1996. Unlike centroid-based algorithms like K-means, DBSCAN can discover clusters of arbitrary shapes and automatically determine the number of clusters.</p>
+
+            <div class="highlight-box">
+                <h3>Key Features of DBSCAN:</h3>
+                <ul>
+                    <li><strong>Density-Based:</strong> Groups points that are closely packed</li>
+                    <li><strong>Noise Handling:</strong> Identifies and handles outliers effectively</li>
+                    <li><strong>Arbitrary Shapes:</strong> Can find clusters of any shape</li>
+                    <li><strong>Automatic:</strong> No need to specify the number of clusters</li>
+                    <li><strong>Robust:</strong> Relatively insensitive to parameter choices</li>
+                </ul>
+            </div>
+
+            <div class="visual-example">
+                <h4>🎨 Visual Comparison: K-means vs DBSCAN</h4>
+                <div class="diagram">
+K-means (Spherical Clusters)         DBSCAN (Arbitrary Shapes)
+                                     
+    ●●●     ●●●                         ●●●●●●●
+   ●● ●   ● ●●                        ●●     ●●
+  ●●   ● ●   ●●                      ●●       ●●●●●●
+   ●● ●   ● ●●                        ●●     ●●    ●
+    ●●●     ●●●                         ●●●●●●      ●●
+                                                     ●●●
+Fails with non-spherical            Successfully identifies
+clusters and noise                  complex shapes and noise
+                </div>
+            </div>
+        </section>
+
+        <section id="core-concepts" class="section">
+            <h2>🔍 Core Concepts and Definitions</h2>
+
+            <h3>Point Classifications</h3>
+            <div class="point-types">
+                <div class="point-type core-point">
+                    <div class="advantage-icon">🟢</div>
+                    <h4>Core Point</h4>
+                    <p>Has at least <strong>MinPts</strong> neighbors within <strong>ε</strong> distance</p>
+                </div>
+                <div class="point-type border-point">
+                    <div class="advantage-icon">🟡</div>
+                    <h4>Border Point</h4>
+                    <p>Within ε distance of a core point but has fewer than MinPts neighbors</p>
+                </div>
+                <div class="point-type noise-point">
+                    <div class="advantage-icon">🔴</div>
+                    <h4>Noise Point</h4>
+                    <p>Neither a core point nor a border point (outlier)</p>
+                </div>
+            </div>
+
+            <h3>Key Definitions</h3>
+            <div class="parameter-grid">
+                <div class="parameter-card">
+                    <div class="parameter-name">ε (Epsilon)</div>
+                    <p>The maximum distance between two points for them to be considered neighbors</p>
+                </div>
+                <div class="parameter-card">
+                    <div class="parameter-name">MinPts</div>
+                    <p>The minimum number of points required to form a dense region (including the point itself)</p>
+                </div>
+                <div class="parameter-card">
+                    <div class="parameter-name">ε-Neighborhood</div>
+                    <p>N_ε(p) = {q ∈ D | dist(p,q) ≤ ε}</p>
+                </div>
+                <div class="parameter-card">
+                    <div class="parameter-name">Density Reachable</div>
+                    <p>Point q is density reachable from p if there exists a chain of core points from p to q</p>
+                </div>
+            </div>
+
+            <h3>Visual Representation of Core Concepts</h3>
+            <div class="diagram">
+DBSCAN Point Classification Example (ε = 2, MinPts = 4)
+
+        A ● ─── ● B           ● F (Noise)
+          │ ╲ ╱ │
+          │  ●  │ 
+          │ ╱ ╲ │
+        C ● ─── ● D
+          │     │
+          ●     ● E
+          
+Legend:
+● A, B, C, D = Core Points (≥4 neighbors within ε=2)
+● E = Border Point (<4 neighbors but within ε of core point)
+● F = Noise Point (isolated, <4 neighbors and not within ε of core)
+
+Cluster Formation:
+- Cluster 1: {A, B, C, D, E} (all density-connected)
+- Noise: {F}
+            </div>
+        </section>
+
+        <section id="mathematical" class="section">
+            <h2>📐 Mathematical Formulation</h2>
+
+            <h3>Distance Metrics</h3>
+            <p>DBSCAN can work with various distance metrics. The most common is Euclidean distance:</p>
+
+            <div class="math-formula">
+                Euclidean Distance: d(p,q) = √(Σᵢ(pᵢ - qᵢ)²)
+            </div>
+
+            <div class="math-formula">
+                Manhattan Distance: d(p,q) = Σᵢ|pᵢ - qᵢ|
+            </div>
+
+            <div class="math-formula">
+                Minkowski Distance: d(p,q) = (Σᵢ|pᵢ - qᵢ|ᵖ)^(1/p)
+            </div>
+
+            <h3>Core Mathematical Definitions</h3>
+
+            <div class="math-formula">
+                ε-Neighborhood: Nₑ(p) = {q ∈ D | dist(p,q) ≤ ε}
+            </div>
+
+            <div class="math-formula">
+                Core Point Condition: |Nₑ(p)| ≥ MinPts
+            </div>
+
+            <div class="math-formula">
+                Directly Density-Reachable: q ∈ Nₑ(p) ∧ |Nₑ(p)| ≥ MinPts
+            </div>
+
+            <div class="math-formula">
+                Density-Connected: ∃o ∈ D : p ρ* o ∧ q ρ* o
+            </div>
+
+            <p>Where ρ* denotes density-reachability relation.</p>
+
+            <h3>Cluster Definition</h3>
+            <div class="highlight-box">
+                <p>A cluster C in DBSCAN is defined as a maximal set of density-connected points:</p>
+                <div class="math-formula">
+                    C = {p ∈ D | ∃q ∈ C : p is density-reachable from q}
+                </div>
+            </div>
+        </section>
+
+        <section id="algorithm" class="section algorithm-section">
+            <h2>⚙️ The DBSCAN Algorithm</h2>
+
+            <div class="algorithm-box">
+                <h3>DBSCAN Pseudocode</h3>
+                <div class="code-block" data-lang="pseudocode">
+                    <code>
+<strong>Algorithm DBSCAN(D, ε, MinPts)</strong>
+Input: Dataset D, radius ε, minimum points MinPts
+Output: Set of clusters C
+
+1. Initialize: C = 0 (cluster counter), Mark all points as UNVISITED
+2. For each point p in D:
+   a) If p is VISITED, continue to next point
+   b) Mark p as VISITED
+   c) NeighborPts = regionQuery(p, ε)
+   d) If |NeighborPts| < MinPts:
+      - Mark p as NOISE
+   e) Else:
+      - C = C + 1 (increment cluster counter)
+      - expandCluster(p, NeighborPts, C, ε, MinPts)
+
+<strong>Function expandCluster(p, NeighborPts, C, ε, MinPts)</strong>
+1. Add p to cluster C
+2. For each point p' in NeighborPts:
+   a) If p' is UNVISITED:
+      - Mark p' as VISITED
+      - NeighborPts' = regionQuery(p', ε)
+      - If |NeighborPts'| ≥ MinPts:
+        * NeighborPts = NeighborPts ∪ NeighborPts'
+   b) If p' is not member of any cluster:
+      - Add p' to cluster C
+
+<strong>Function regionQuery(p, ε)</strong>
+1. Return all points q where dist(p,q) ≤ ε
+                    </code>
+                </div>
+            </div>
+
+            <h3>Step-by-Step Algorithm Execution</h3>
+            <div class="step-flow">
+                <div class="step-item">
+                    <div class="step-number">1</div>
+                    <h4>Initialization</h4>
+                    <p>Mark all points as unvisited and initialize cluster counter to 0</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">2</div>
+                    <h4>Point Selection</h4>
+                    <p>Select an unvisited point and mark it as visited</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">3</div>
+                    <h4>Neighborhood Query</h4>
+                    <p>Find all points within ε distance (ε-neighborhood)</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">4</div>
+                    <h4>Core Point Check</h4>
+                    <p>If neighborhood has ≥ MinPts points, it's a core point</p>
+                </div>
+                <div class="step-item">
+                    <div class="step-number">5</div>
+                    <h4>Cluster Expansion

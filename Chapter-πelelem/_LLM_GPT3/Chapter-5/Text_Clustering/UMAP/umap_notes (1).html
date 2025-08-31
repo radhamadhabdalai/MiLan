@@ -1,0 +1,245 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMAP Dimensionality Reduction Notes</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        h1, h2, h3, h4 {
+            color: #2c3e50;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .equation {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .diagram {
+            text-align: center;
+            margin: 20px 0;
+            background: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            font-family: monospace;
+        }
+        .note {
+            background: #e7f3fe;
+            border-left: 4px solid #2196F3;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .substep {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>UMAP Dimensionality Reduction Mechanism</h1>
+    <p>Uniform Manifold Approximation and Projection (UMAP) is a dimensionality reduction technique that preserves both local and global structures of high-dimensional data. It uses topological data analysis to construct a high-dimensional graph and optimizes a low-dimensional representation to match its structure.</p>
+
+    <h2>1. Overview of UMAP</h2>
+    <p>UMAP models data as a weighted graph in high-dimensional space, capturing relationships between points, and projects this structure into a lower-dimensional space (e.g., 2D or 3D) while preserving topological properties. It is grounded in manifold learning and Riemannian geometry.</p>
+
+    <h2>2. Detailed Steps in UMAP</h2>
+    <h3>2.1. Construct High-Dimensional Graph</h3>
+    <p>UMAP represents the high-dimensional data as a weighted k-nearest neighbor (k-NN) graph, where nodes are data points and edges represent similarities. This step involves computing the k-NN and assigning weights to edges.</p>
+    <div class="substep">
+        <h4>Step 1: Compute k-Nearest Neighbors (k-NN)</h4>
+        <p>For each data point \( x_i \) in the high-dimensional space (e.g., \( \mathbb{R}^D \)), compute the distances to all other points using a chosen distance metric (e.g., Euclidean, cosine, or Manhattan). The Euclidean distance between points \( x_i \) and \( x_j \) is:</p>
+        <div class="equation">
+            \[ d(x_i, x_j) = \sqrt{\sum_{k=1}^D (x_{i,k} - x_{j,k})^2} \]
+        </div>
+        <p>Select the \( k \) nearest neighbors for each point based on these distances, where \( k \) is set by the <code>n_neighbors</code> hyperparameter (default: 15). This creates a directed graph where each point \( x_i \) has edges to its \( k \) nearest neighbors.</p>
+        <p><strong>How it works:</strong></p>
+        <ul>
+            <li>Use an efficient algorithm (e.g., KD-tree or ball tree) to compute distances and identify the \( k \) closest points.</li>
+            <li>The choice of \( k \) balances local and global structure: smaller \( k \) emphasizes local neighborhoods, while larger \( k \) captures broader relationships.</li>
+            <li>Example: For a dataset with 100 points and \( k=5 \), each point has 5 outgoing edges to its 5 nearest neighbors.</li>
+        </ul>
+
+        <h4>Step 2: Assign Edge Weights</h4>
+        <p>Assign weights to the edges based on a similarity function that models local connectivity. UMAP uses a smooth approximation of a Gaussian kernel to compute the weight \( w_{ij} \) between points \( x_i \) and \( x_j \):</p>
+        <div class="equation">
+            \[ w_{ij} = \exp\left(-\frac{d(x_i, x_j) - \rho_i}{\sigma_i}\right) \]
+        </div>
+        <p>Where:</p>
+        <ul>
+            <li>\( d(x_i, x_j) \): Distance between points \( x_i \) and \( x_j \).</li>
+            <li>\( \rho_i \): Distance to the nearest neighbor of \( x_i \), ensuring at least one strong connection.</li>
+            <li>\( \sigma_i \): A scaling factor (local bandwidth) chosen such that:</li>
+        </ul>
+        <div class="equation">
+            \[ \sum_{j \in \text{neighbors of } i} \exp\left(-\frac{d(x_i, x_j) - \rho_i}{\sigma_i}\right) = \log_2(k) \]
+        </div>
+        <p><strong>How it works:</strong></p>
+        <ul>
+            <li>\( \rho_i \) normalizes distances by subtracting the distance to the nearest neighbor, ensuring local connectivity.</li>
+            <li>\( \sigma_i \) is determined per point to adapt to varying local densities, satisfying the normalization condition above.</li>
+            <li>The exponential function ensures that closer points have higher weights (near 1), while farther points have weights near 0.</li>
+            <li>Example: If \( d(x_i, x_j) = \rho_i \), then \( w_{ij} = 1 \), ensuring the nearest neighbor has maximum similarity.</li>
+        </ul>
+
+        <h4>Step 3: Symmetrize the Graph</h4>
+        <p>The k-NN graph is initially directed (edges from \( x_i \) to its neighbors). To make it undirected, symmetrize the weights:</p>
+        <div class="equation">
+            \[ w_{ij} = w_{ij} + w_{ji} - w_{ij}w_{ji} \]
+        </div>
+        <p><strong>How it works:</strong></p>
+        <ul>
+            <li>This operation combines weights from both directions, ensuring \( w_{ij} = w_{ji} \).</li>
+            <li>The subtraction term \( w_{ij}w_{ji} \) prevents overemphasizing mutual connections.</li>
+            <li>Result: A weighted, undirected graph capturing pairwise similarities.</li>
+        </ul>
+    </div>
+
+    <div class="diagram">
+        <pre>
+[Data Points in High-D Space]
+   x1 ---- w12 ---- x2
+    | \              /|
+    |  \ w13        / |
+    w14 \          / w23
+    |    \        /   |
+   x4 --- w34 --- x3
+        </pre>
+        <p><strong>Figure 1:</strong> High-dimensional k-NN graph with weighted edges representing similarities.</p>
+    </div>
+
+    <h3>2.2. Initialize Low-Dimensional Representation</h3>
+    <p>Initialize a low-dimensional embedding (e.g., \( y_i \in \mathbb{R}^2 \)) using spectral embedding (based on the high-dimensional graph’s Laplacian) or random initialization. Construct a k-NN graph in this space with similarity weights:</p>
+    <div class="equation">
+        \[ v_{ij} = \frac{1}{1 + a \cdot d(y_i, y_j)^{2b}} \]
+    </div>
+    <p>Where:</p>
+    <ul>
+        <li>\( y_i, y_j \): Low-dimensional coordinates.</li>
+        <li>\( a, b \): Hyperparameters fitted to approximate the high-dimensional structure.</li>
+        <li>\( d(y_i, y_j) \): Distance in low-dimensional space (e.g., Euclidean).</li>
+    </ul>
+    <p><strong>How it works:</strong></p>
+    <ul>
+        <li>The similarity function is a fuzzy simplicial set representation, designed to decay smoothly with distance.</li>
+        <li>\( a \) and \( b \) are learned to match the desired spread of points, controlled by the <code>min_dist</code> hyperparameter.</li>
+    </ul>
+
+    <h3>2.3. Optimize Low-Dimensional Embedding</h3>
+    <p>Optimize the low-dimensional coordinates \( y_i \) to minimize the cross-entropy loss between the high-dimensional and low-dimensional graphs:</p>
+    <div class="equation">
+        \[ \text{Loss} = \sum_{i \neq j} \left[ w_{ij} \log\left(\frac{w_{ij}}{v_{ij}}\right) + (1 - w_{ij}) \log\left(\frac{1 - w_{ij}}{1 - v_{ij}}\right) \right] \]
+    </div>
+    <p><strong>How it works:</strong></p>
+    <ul>
+        <li>The first term encourages high \( w_{ij} \) (similar points) to have high \( v_{ij} \) (close in low-dimensional space).</li>
+        <li>The second term ensures low \( w_{ij} \) (dissimilar points) have low \( v_{ij} \) (far apart).</li>
+        <li>Use stochastic gradient descent (SGD) to update \( y_i \), typically with negative sampling to handle the large number of dissimilar pairs.</li>
+    </ul>
+
+    <h2>3. Diagram: UMAP Workflow</h2>
+    <div class="diagram">
+        <pre>
+High-D Data → k-NN Graph → Low-D Init → Optimize → Low-D Embedding
+[Points in R^D] → [Weighted Graph] → [Points in R^2] → [SGD] → [Final 2D Plot]
+        </pre>
+        <p><strong>Figure 2:</strong> UMAP pipeline from high-dimensional data to optimized low-dimensional embedding.</p>
+    </div>
+
+    <h2>4. Key Hyperparameters</h2>
+    <ul>
+        <li><strong>n_neighbors:</strong> Controls local vs. global structure (default: 15).</li>
+        <li><strong>min_dist:</strong> Minimum distance between points in low-dimensional space (default: 0.1).</li>
+        <li><strong>n_components:</strong> Output dimensions (e.g., 2).</li>
+        <li><strong>metric:</strong> Distance metric (e.g., Euclidean).</li>
+    </ul>
+
+    <h2>5. Example: UMAP in Python</h2>
+    <pre>
+import umap
+import numpy as np
+
+# Sample data: 100 points in 50D
+X = np.random.rand(100, 50)
+reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, n_components=2)
+embedding = reducer.fit_transform(X)
+print(embedding.shape)  # Output: (100, 2)
+    </pre>
+
+    <h2>6. Advantages of UMAP</h2>
+    <div class="note">
+        <p><strong>Note:</strong> UMAP is faster than t-SNE, preserves global structure, and supports diverse data types (e.g., images, text).</p>
+    </div>
+
+    <h2>7. Steps to Apply UMAP</h2>
+    <ol>
+        <li><strong>Preprocess Data:</strong> Normalize or scale features to ensure consistent distances.</li>
+        <li><strong>Set Hyperparameters:</strong> Choose <code>n_neighbors</code>, <code>min_dist</code>, <code>n_components</code>, and <code>metric</code>.</li>
+        <li><strong>Construct High-Dimensional Graph:</strong> Compute k-NN, assign weights, and symmetrize as described above.</li>
+        <li><strong>Initialize Low-Dimensional Embedding:</strong> Use spectral embedding or random initialization.</li>
+        <li><strong>Optimize Embedding:</strong> Minimize cross-entropy loss using SGD.</li>
+        <li><strong>Output Embedding:</strong> Use for visualization or further analysis.</li>
+    </ol>
+
+    <h2>8. Diagram: High vs Low-Dimensional Space</h2>
+    <div class="diagram">
+        <pre>
+High-D Space (50D)         →         Low-D Space (2D)
+[Complex Relationships]     →         [Preserved Structure]
+x1 --- x2                  →         y1 --- y2
+ |     |                   →          |     |
+x4 --- x3                  →         y4 --- y3
+        </pre>
+        <p><strong>Figure 3:</strong> UMAP maps high-dimensional relationships to a low-dimensional space, preserving structure.</p>
+    </div>
+</body>
+</html>

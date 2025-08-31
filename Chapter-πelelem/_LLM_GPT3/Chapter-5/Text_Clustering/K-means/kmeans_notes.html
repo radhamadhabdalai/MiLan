@@ -1,0 +1,258 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-Means Clustering Notes</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        h1, h2, h3, h4 {
+            color: #2c3e50;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .equation {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .diagram {
+            text-align: center;
+            margin: 20px 0;
+            background: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            font-family: monospace;
+        }
+        .note {
+            background: #e7f3fe;
+            border-left: 4px solid #2196F3;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .output {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .substep {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>K-Means Clustering Algorithm</h1>
+    <p>K-Means is an unsupervised clustering algorithm that partitions a dataset into \( K \) clusters by minimizing the variance within each cluster. It assigns each data point to the nearest cluster centroid and iteratively updates centroids to optimize the clustering.</p>
+
+    <h2>1. Overview of K-Means</h2>
+    <p>K-Means groups \( N \) data points in a \( D \)-dimensional space into \( K \) clusters, where each point belongs to the cluster with the closest centroid. It minimizes the within-cluster sum of squares (WCSS), also known as the inertia.</p>
+
+    <h2>2. Detailed Steps in K-Means</h2>
+    <h3>2.1. Initialize Centroids</h3>
+    <p>Randomly select \( K \) points as initial centroids or use a method like K-Means++ for smarter initialization.</p>
+    <div class="substep">
+        <p><strong>K-Means++ Initialization:</strong></p>
+        <ul>
+            <li>Choose the first centroid randomly from the data points.</li>
+            <li>For each remaining centroid, select a point with probability proportional to the squared distance from the nearest existing centroid.</li>
+        </ul>
+        <p><strong>How it works:</strong> K-Means++ spreads out initial centroids to avoid poor starting points, improving convergence.</p>
+    </div>
+
+    <h3>2.2. Assign Points to Clusters</h3>
+    <p>Assign each data point \( x_i \) to the cluster with the nearest centroid based on Euclidean distance (or another metric).</p>
+    <div class="substep">
+        <p>For a point \( x_i \in \mathbb{R}^D \) and centroids \( \mu_k \in \mathbb{R}^D \), compute:</p>
+        <div class="equation">
+            \[ c_i = \arg\min_k \| x_i - \mu_k \|_2^2 \]
+        </div>
+        <p>Where \( c_i \) is the cluster assignment for point \( x_i \), and \( \| x_i - \mu_k \|_2^2 = \sum_{d=1}^D (x_{i,d} - \mu_{k,d})^2 \).</p>
+        <p><strong>How it works:</strong> Each point is assigned to the cluster whose centroid is closest, forming \( K \) clusters.</p>
+    </div>
+
+    <h3>2.3. Update Centroids</h3>
+    <p>Recalculate each cluster’s centroid as the mean of all points assigned to that cluster.</p>
+    <div class="substep">
+        <p>For cluster \( k \), the new centroid \( \mu_k \) is:</p>
+        <div class="equation">
+            \[ \mu_k = \frac{1}{|C_k|} \sum_{x_i \in C_k} x_i \]
+        </div>
+        <p>Where \( C_k \) is the set of points in cluster \( k \), and \( |C_k| \) is the number of points in the cluster.</p>
+        <p><strong>How it works:</strong> The centroid is the arithmetic mean of the points, minimizing the average distance within the cluster.</p>
+    </div>
+
+    <h3>2.4. Optimize Objective Function</h3>
+    <p>Repeat steps 2.2 and 2.3 until convergence (centroids stabilize or maximum iterations reached). The objective is to minimize the within-cluster sum of squares (WCSS):</p>
+    <div class="equation">
+        \[ J = \sum_{k=1}^K \sum_{x_i \in C_k} \| x_i - \mu_k \|_2^2 \]
+    </div>
+    <p><strong>How it works:</strong> The algorithm iteratively reduces \( J \), converging to a local minimum. Convergence is reached when assignments no longer change significantly.</p>
+
+    <h2>3. Diagram: K-Means Workflow</h2>
+    <div class="diagram">
+        <pre>
+Data Points → Initialize Centroids → Assign Clusters → Update Centroids → Converge → Final Clusters
+[Points in R^D] → [K Centroids] → [Cluster Assignments] → [New Centroids] → [Repeat] → [C1, C2, ..., CK]
+        </pre>
+        <p><strong>Figure 1:</strong> K-Means pipeline from data points to final clusters.</p>
+    </div>
+
+    <h2>4. Key Parameters</h2>
+    <ul>
+        <li><strong>n_clusters (K):</strong> Number of clusters (must be specified).</li>
+        <li><strong>init:</strong> Centroid initialization method (e.g., ‘random’ or ‘k-means++’).</li>
+        <li><strong>max_iter:</strong> Maximum number of iterations (default: 300).</li>
+        <li><strong>random_state:</strong> Seed for reproducibility.</li>
+    </ul>
+
+    <h2>5. Small Example: K-Means on 5 Points</h2>
+    <h3>Dataset</h3>
+    <p>Use the same 5-point 3D dataset as in previous examples for consistency:</p>
+    <pre>
+[[1.0, 1.0, 1.0],  # x1
+ [1.1, 1.1, 1.1],  # x2 (close to x1)
+ [2.0, 2.0, 2.0],  # x3
+ [3.0, 3.0, 3.0],  # x4
+ [3.1, 3.1, 3.1]]  # x5 (close to x4)
+    </pre>
+    <p>Since the points form two natural groups (\( x_1, x_2 \) and \( x_4, x_5 \)) with \( x_3 \) in between, we set \( K=2 \).</p>
+
+    <h3>Python Code</h3>
+    <pre>
+import numpy as np
+from sklearn.cluster import KMeans
+
+# Define 5 points in 3D
+X = np.array([
+    [1.0, 1.0, 1.0],
+    [1.1, 1.1, 1.1],
+    [2.0, 2.0, 2.0],
+    [3.0, 3.0, 3.0],
+    [3.1, 3.1, 3.1]
+])
+
+# Apply K-Means
+kmeans = KMeans(n_clusters=2, init='k-means++', random_state=42)
+labels = kmeans.fit_predict(X)
+centroids = kmeans.cluster_centers_
+
+print("Cluster Labels:", labels)
+print("Centroids:\n", centroids)
+    </pre>
+
+    <h3>Example Output</h3>
+    <div class="output">
+        <p><strong>Cluster Labels:</strong> [0 0 1 1 1]</p>
+        <p><strong>Centroids (approximate):</strong></p>
+        <pre>
+[[1.05, 1.05, 1.05]  # Centroid for cluster 0 (x1, x2)
+ [2.70, 2.70, 2.70]] # Centroid for cluster 1 (x3, x4, x5)
+        </pre>
+        <p><strong>Note:</strong> \( x_1, x_2 \) form one cluster, and \( x_3, x_4, x_5 \) form another due to proximity. Exact centroids depend on initialization.</p>
+    </div>
+
+    <h3>Steps in Example</h3>
+    <ol>
+        <li><strong>Initialize Centroids:</strong> K-Means++ selects two points (e.g., \( x_1 \) and \( x_4 \)) as initial centroids.</li>
+        <li><strong>Assign Clusters:</strong> Compute distances (e.g., \( d(x_1, x_4) \approx 3.464 \), \( d(x_1, x_2) \approx 0.173 \)). Assign \( x_1, x_2 \) to one cluster and \( x_3, x_4, x_5 \) to another.</li>
+        <li><strong>Update Centroids:</strong> Compute means: cluster 0 centroid at \( (1.05, 1.05, 1.05) \), cluster 1 at \( (2.70, 2.70, 2.70) \).</li>
+        <li><strong>Iterate:</strong> Reassign points and update centroids until convergence (likely quick for this small dataset).</li>
+    </ol>
+
+    <h2>6. Diagram: Clustering Result</h2>
+    <div class="diagram">
+        <pre>
+3D Space:                   Clusters:
+x1 --- x2                  C0: x1, x2
+ |     |                   C1: x3, x4, x5
+x3 --- x4 --- x5           Centroids: μ0, μ1
+        </pre>
+        <p><strong>Figure 2:</strong> K-Means groups \( x_1, x_2 \) and \( x_3, x_4, x_5 \) into two clusters based on proximity.</p>
+    </div>
+
+    <h2>7. Advantages and Limitations</h2>
+    <div class="note">
+        <p><strong>Advantages:</strong></p>
+        <ul>
+            <li>Simple and computationally efficient (O(NKD) per iteration).</li>
+            <li>Scales well to large datasets with K-Means++ initialization.</li>
+            <li>Works well for spherical clusters.</li>
+        </ul>
+        <p><strong>Limitations:</strong></p>
+        <ul>
+            <li>Requires specifying \( K \).</li>
+            <li>Sensitive to outliers and initial centroids.</li>
+            <li>Assumes spherical clusters, less effective for complex shapes.</li>
+        </ul>
+    </div>
+
+    <h2>8. Comparison with PCA, UMAP, and t-SNE</h2>
+    <ul>
+        <li><strong>K-Means vs. PCA:</strong> PCA reduces dimensionality by projecting data onto principal components, while K-Means clusters data without reducing dimensions. PCA can preprocess data for K-Means.</li>
+        <li><strong>K-Means vs. UMAP/t-SNE:</strong> UMAP and t-SNE are dimensionality reduction techniques for visualization, preserving local/global structures. K-Means is for clustering, not dimensionality reduction.</li>
+        <li><strong>Use Case:</strong> Use PCA/UMAP/t-SNE for visualization or preprocessing, then apply K-Means for clustering in the reduced space.</li>
+    </ul>
+
+    <h2>9. Steps to Apply K-Means</h2>
+    <ol>
+        <li><strong>Preprocess Data:</strong> Standardize features to ensure equal scaling (optional but recommended).</li>
+        <li><strong>Choose K:</strong> Select the number of clusters (e.g., using the elbow method).</li>
+        <li><strong>Initialize Centroids:</strong> Use K-Means++ or random initialization.</li>
+        <li><strong>Assign Clusters:</strong> Assign each point to the nearest centroid.</li>
+        <li><strong>Update Centroids:</strong> Compute the mean of each cluster’s points.</li>
+        <li><strong>Iterate:</strong> Repeat assignment and update until convergence.</li>
+        <li><strong>Output:</strong> Use cluster labels for analysis or visualization.</li>
+    </ol>
+</body>
+</html>

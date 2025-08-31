@@ -1,0 +1,279 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCA Dimensionality Reduction Notes</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        h1, h2, h3, h4 {
+            color: #2c3e50;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .equation {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .diagram {
+            text-align: center;
+            margin: 20px 0;
+            background: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            font-family: monospace;
+        }
+        .note {
+            background: #e7f3fe;
+            border-left: 4px solid #2196F3;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .output {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .substep {
+            margin-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Principal Component Analysis (PCA) Dimensionality Reduction</h1>
+    <p>Principal Component Analysis (PCA) is a linear dimensionality reduction technique that transforms high-dimensional data into a lower-dimensional space by projecting it onto directions of maximum variance, called principal components. It is widely used for data visualization, noise reduction, and feature extraction.</p>
+
+    <h2>1. Overview of PCA</h2>
+    <p>PCA identifies orthogonal axes (principal components) that capture the maximum variance in the data. It projects the data onto these axes to reduce dimensionality while preserving as much variability as possible. PCA assumes linear relationships and is based on the covariance matrix of the data.</p>
+
+    <h2>2. Detailed Steps in PCA</h2>
+    <h3>2.1. Standardize the Data</h3>
+    <p>Center the data by subtracting the mean of each feature, and optionally scale by dividing by the standard deviation to ensure equal contribution of features.</p>
+    <div class="substep">
+        <p>For a dataset \( X \in \mathbb{R}^{N \times D} \) with \( N \) samples and \( D \) features, standardize each feature \( x_j \):</p>
+        <div class="equation">
+            \[ x_j \gets \frac{x_j - \mu_j}{\sigma_j} \]
+        </div>
+        <p>Where:</p>
+        <ul>
+            <li>\( \mu_j \): Mean of feature \( j \).</li>
+            <li>\( \sigma_j \): Standard deviation of feature \( j \).</li>
+        </ul>
+        <p><strong>How it works:</strong> Standardization ensures features with different scales (e.g., height in meters vs. weight in kilograms) contribute equally to variance.</p>
+    </div>
+
+    <h3>2.2. Compute the Covariance Matrix</h3>
+    <p>Calculate the covariance matrix to understand the relationships between features.</p>
+    <div class="substep">
+        <p>For standardized data \( X \), the covariance matrix \( \Sigma \in \mathbb{R}^{D \times D} \) is:</p>
+        <div class="equation">
+            \[ \Sigma = \frac{1}{N-1} X^T X \]
+        </div>
+        <p>Where \( X \) is the centered (and possibly scaled) data matrix. The element \( \Sigma_{ij} \) represents the covariance between features \( i \) and \( j \).</p>
+        <p><strong>How it works:</strong> The covariance matrix captures how features vary together. Diagonal elements are variances, and off-diagonal elements are covariances.</p>
+    </div>
+
+    <h3>2.3. Compute Eigenvectors and Eigenvalues</h3>
+    <p>Perform eigendecomposition on the covariance matrix to find the principal components.</p>
+    <div class="substep">
+        <p>Solve the eigenvalue problem:</p>
+        <div class="equation">
+            \[ \Sigma v_i = \lambda_i v_i \]
+        </div>
+        <p>Where:</p>
+        <ul>
+            <li>\( v_i \): Eigenvector (principal component direction).</li>
+            <li>\( \lambda_i \): Eigenvalue (amount of variance along \( v_i \)).</li>
+        </ul>
+        <p><strong>How it works:</strong></p>
+        <ul>
+            <li>Eigenvectors are orthogonal directions of maximum variance.</li>
+            <li>Eigenvalues indicate the magnitude of variance explained by each eigenvector.</li>
+            <li>Sort eigenvectors by decreasing eigenvalues to prioritize components with the most variance.</li>
+        </ul>
+    </div>
+
+    <h3>2.4. Project Data onto Principal Components</h3>
+    <p>Select the top \( k \) eigenvectors (where \( k \) is the desired number of dimensions, e.g., 2) and project the data onto them.</p>
+    <div class="substep">
+        <p>Form the projection matrix \( W \in \mathbb{R}^{D \times k} \) from the top \( k \) eigenvectors. Project the data:</p>
+        <div class="equation">
+            \[ Y = X W \]
+        </div>
+        <p>Where \( Y \in \mathbb{R}^{N \times k} \) is the low-dimensional representation.</p>
+        <p><strong>How it works:</strong> The projection transforms each point \( x_i \) into a new coordinate system defined by the principal components, reducing dimensionality to \( k \).</p>
+    </div>
+
+    <h2>3. Diagram: PCA Workflow</h2>
+    <div class="diagram">
+        <pre>
+High-D Data → Standardize → Covariance Matrix → Eigendecomposition → Project → Low-D Embedding
+[Points in R^D] → [Mean=0, Std=1] → [Σ Matrix] → [Eigenvectors] → [Y = XW] → [Points in R^k]
+        </pre>
+        <p><strong>Figure 1:</strong> PCA pipeline from high-dimensional data to low-dimensional projection.</p>
+    </div>
+
+    <h2>4. Key Parameters</h2>
+    <ul>
+        <li><strong>n_components:</strong> Number of principal components (e.g., 2 for visualization).</li>
+        <li><strong>Standardization:</strong> Whether to scale features (recommended for features with different units).</li>
+        <li><strong>Explained Variance Ratio:</strong> Fraction of total variance captured by each component, used to choose \( k \).</li>
+    </ul>
+
+    <h2>5. Small Example: PCA on 5 Points</h2>
+    <h3>Dataset</h3>
+    <p>Use the same 5-point 3D dataset as in UMAP and t-SNE examples for consistency:</p>
+    <pre>
+[[1.0, 1.0, 1.0],  # x1
+ [1.1, 1.1, 1.1],  # x2 (close to x1)
+ [2.0, 2.0, 2.0],  # x3
+ [3.0, 3.0, 3.0],  # x4
+ [3.1, 3.1, 3.1]]  # x5 (close to x4)
+    </pre>
+
+    <h3>Python Code</h3>
+    <pre>
+import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+# Define 5 points in 3D
+X = np.array([
+    [1.0, 1.0, 1.0],
+    [1.1, 1.1, 1.1],
+    [2.0, 2.0, 2.0],
+    [3.0, 3.0, 3.0],
+    [3.1, 3.1, 3.1]
+])
+
+# Standardize the data
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# Apply PCA
+pca = PCA(n_components=2)
+embedding = pca.fit_transform(X_scaled)
+
+print("2D Embedding:")
+print(embedding)
+print("Explained Variance Ratio:", pca.explained_variance_ratio_)
+    </pre>
+
+    <h3>Example Output</h3>
+    <div class="output">
+        <p><strong>2D Embedding (approximate):</strong></p>
+        <pre>
+[[-1.414,  0.000]  # y1
+ [-1.374,  0.000]  # y2 (close to y1)
+ [ 0.000,  0.000]  # y3
+ [ 1.374,  0.000]  # y4
+ [ 1.414,  0.000]] # y5 (close to y4)
+        </pre>
+        <p><strong>Explained Variance Ratio (approximate):</strong> [0.999, 0.000]</p>
+        <p><strong>Note:</strong> The second component explains nearly zero variance because the data lies along a line in 3D space. \( y_1, y_2 \) and \( y_4, y_5 \) remain close.</p>
+    </div>
+
+    <h3>Steps in Example</h3>
+    <ol>
+        <li><strong>Standardize:</strong> Subtract the mean and divide by the standard deviation for each feature.</li>
+        <li><strong>Covariance Matrix:</strong> Compute \( \Sigma \) for the 3 features, capturing their linear relationships.</li>
+        <li><strong>Eigendecomposition:</strong> Find eigenvectors and eigenvalues. The first eigenvector captures the direction along the line formed by the points.</li>
+        <li><strong>Project:</strong> Project the data onto the top 2 eigenvectors (though the second explains little variance here).</li>
+    </ol>
+
+    <h2>6. Diagram: High vs Low-Dimensional Space</h2>
+    <div class="diagram">
+        <pre>
+High-D Space (3D)         →         Low-D Space (2D)
+x1 --- x2                 →         y1 --- y2
+ |     |                  →          |     |
+x3 --- x4 --- x5          →         y3 --- y4 --- y5
+        </pre>
+        <p><strong>Figure 2:</strong> PCA projects points onto principal components, preserving variance along the main direction.</p>
+    </div>
+
+    <h2>7. Advantages and Limitations</h2>
+    <div class="note">
+        <p><strong>Advantages:</strong></p>
+        <ul>
+            <li>Computationally efficient (O(min(ND², D³)) complexity).</li>
+            <li>Linear transformation, interpretable via explained variance.</li>
+            <li>Useful for noise reduction and feature extraction.</li>
+        </ul>
+        <p><strong>Limitations:</strong></p>
+        <ul>
+            <li>Assumes linear relationships, missing complex structures.</li>
+            <li>Less effective for visualization compared to t-SNE or UMAP for non-linear data.</li>
+        </ul>
+    </div>
+
+    <h2>8. Comparison with UMAP and t-SNE</h2>
+    <ul>
+        <li><strong>PCA vs. UMAP:</strong> PCA is linear and faster but captures only global variance, while UMAP is non-linear, preserving both local and global structures.</li>
+        <li><strong>PCA vs. t-SNE:</strong> PCA is deterministic and computationally lighter, but t-SNE excels at visualizing local structures in non-linear data.</li>
+        <li><strong>Use Case:</strong> PCA is ideal for linear data or preprocessing, while UMAP and t-SNE are better for visualization of complex datasets.</li>
+    </ul>
+
+    <h2>9. Steps to Apply PCA</h2>
+    <ol>
+        <li><strong>Preprocess Data:</strong> Standardize features to zero mean and unit variance.</li>
+        <li><strong>Compute Covariance Matrix:</strong> Calculate \( \Sigma \) for the standardized data.</li>
+        <li><strong>Eigendecomposition:</strong> Find eigenvectors and eigenvalues, sort by eigenvalues.</li>
+        <li><strong>Select Components:</strong> Choose the top \( k \) eigenvectors based on explained variance.</li>
+        <li><strong>Project Data:</strong> Transform data using \( Y = X W \).</li>
+        <li><strong>Output:</strong> Use the low-dimensional embedding for visualization or analysis.</li>
+    </ol>
+</body>
+</html>
